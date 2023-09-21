@@ -6,6 +6,7 @@ export const Leaderboards = () =>
     return (
         <div className="leaderboards">
             <Header />
+            
         </div>
     )
 }
