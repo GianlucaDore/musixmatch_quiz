@@ -16,7 +16,7 @@ function App()
         <Routes>
           <Route exact path='/' element={ <Home /> } />
           <Route path='/quiz' element={ <Quiz /> } />
-          <Route path='/scores' element={ <Leaderboards /> } />
+          <Route path='/leaderboards' element={ <Leaderboards /> } />
           <Route path="*" element={ <NotFound /> } />
         </Routes>
       </BrowserRouter>
