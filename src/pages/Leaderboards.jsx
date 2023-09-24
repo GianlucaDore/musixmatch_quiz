@@ -16,7 +16,6 @@ export const Leaderboards = () =>
                   <p>{score.username}</p>
                 </div> )
             })}
-
         </div>
     )
 }

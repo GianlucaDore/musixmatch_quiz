@@ -60,7 +60,10 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
         /* Let's fetch the random lyrics needed for the question. */
         const apikey = "4c1ba2ca3c12e38d88e4b8d38b05f5d3";
         /* We can call Math.random() since we're in a thunk, not in a reducer. */
-        const randomID = getState().quiz.track_database[getRandomIndex()];  // We access the global state through the getState parameter of the thunk API.
+        const numberOfTracksInTheFile = 20;  // As of now, track_IDs.js has 20 tracks to choose the question from.
+        const calcualtion = numberOfTracksInTheFile - getState().quiz.userLoggedIn.questionIndex + 1
+        const randomIDIndex = getRandomIndex(calcualtion); // We exclude the track chosen to prevent duplicated questions.
+        const randomID = getState().quiz.track_database[randomIDIndex];  // We access the global state through the getState parameter of the thunk API.
 
         const apiMethod = "track.lyrics.get?commontrack_id="
         const response = await fetch(encodeURI('https://api.musixmatch.com/ws/1.1/' + apiMethod + randomID + '&apikey=' + apikey), {
@@ -103,23 +106,23 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
 
         /* We take 2 other random artists from the artists array to make the alternatives: */
         const alternatives = [];
-        alternatives.push(getState().quiz.artists_database[getRandomIndex()]);
-        alternatives.push(getState().quiz.artists_database[getRandomIndex()]);
+        alternatives.push(getState().quiz.artists_database[getRandomIndex(30)]);  // 30 cause we have fetched the top 30 artists at the start of the quiz (fetchArtists).
+        alternatives.push(getState().quiz.artists_database[getRandomIndex(30)]);  // Actually, no need to exclude the artists already chosen like we had to for the tracks. 30 stays a constant here.
         alternatives.push(correctAnswer);
-        /* Let's shuffle the alternatives to prevent the correct answer from being always given
-           as the last option, for example let's sort them by artist_id in the array. */
-        alternatives.sort((a, b) => (a.artist_id > b.artist_id) ? 1 : -1);
+        /* Let's shuffle the alternatives to prevent the correct answer from being always given as the last option: */
+        shuffleArray(alternatives);
         
-        return { alternatives, correctAnswer, lyrics_body };
+        /* In order to prevent duplicated questions, we pass the random index generated to access the tracksID database,
+           so that the reducer function can exclude the already given question from the pool of next questions in the quiz. */
+        return { alternatives, correctAnswer, lyrics_body, randomIDIndex };  
     }
 );
 
-function getRandomIndex()
+function getRandomIndex(max)
 {
     const min=0;
-    const max=(20); // - questionIndex + 1);  Since questionIndex starts from 1
     /* We proceed to select a random index to pick from the track_ID array in the store, that acts as our question DB. */
-    const randomIndex = Math.floor(Math.random() * (max - min + 1)) + min; 
+    const randomIndex = Math.floor(Math.random() * (max - min)) + min; 
     return randomIndex;
 }
 
@@ -144,7 +147,7 @@ const initialState =
         username: "",
         isUserLoggedIn: false,
         currentPoints: 0,
-        questionIndex: 0,
+        questionIndex: 1,
     },
     scoreboard: []
 }
@@ -177,7 +180,7 @@ export const quizSlice = createSlice({
             };
         },
         newGame: (state) => {
-            state.track_database = shuffleArray([...trackIDs]);
+            state.track_database = [...trackIDs];  // We restore all the trackIDs of the file in our database for each new game.
             state.userLoggedIn = {...state.userLoggedIn, currentPoints: 0, questionIndex: 1};
         },
         registerScore: (state, action) => {
@@ -194,7 +197,7 @@ export const quizSlice = createSlice({
             state.scoreboard.push(scoreObj);
             state.scoreboard.sort((a, b) => b.score - a.score);  // The array is pretty short, calling sort() is not that computationally onerous... */            /* If the scoreboard has more than 10 entries, we leave out the cell with the lowest score, which will be in tail. */
             if (state.scoreboard.length > 10)
-                state.scoreboard.pop();
+                state.scoreboard.pop();  // If there are more than 10 entries in the scoreboard, we leave out the last one.
         },
         addPoints: (state) => {
             state.userLoggedIn.currentPoints += 100;
@@ -224,7 +227,11 @@ export const quizSlice = createSlice({
                 correctAnswer: action.payload.correctAnswer
             };
 
-            return ({...state, question: question, isQuizCardLoading: false});
+            console.trace();
+            const updatedTrackIDs = [...state.track_database];  // By using splice, we need to make a copy of the state array to adhere to Redux state immutability.
+            updatedTrackIDs.splice(action.payload.randomIDIndex, 1); // We remove 1 item from the state track_database, at the desired position.
+
+            return ({...state, track_database: updatedTrackIDs, question: question, isQuizCardLoading: false});
         },
         [fetchArtists.pending] : () => {
             console.log("Promise fetchArtists is pending.");
