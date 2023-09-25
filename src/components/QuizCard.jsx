@@ -56,13 +56,15 @@ export const QuizCard = (props) =>
     return (
         <>
             {!!isLoading ? (
-                <div className="quizcard">
-                    <h1>Question {props.questionIndex}.</h1>
+                <div className="quiz_clock">
+                    <h1>Loading...</h1>
                     <ClockLoader color={'black'} loading={isLoading} size={100} />
                 </div>
             ) : (
-                <div className="quizcard">
-                    <h1>Question {props.index}.</h1>
+                <div className="quiz_card">
+                    <div className="question_header">
+                        <h1>Question {props.index}.</h1>
+                    </div>
                     <h1>Time: {clock}</h1>
                     <div className="lyrics_body">
                         <h6>Who sings these lyrics?</h6>

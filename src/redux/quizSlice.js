@@ -184,10 +184,7 @@ export const quizSlice = createSlice({
             state.userLoggedIn = {...state.userLoggedIn, currentPoints: 0, questionIndex: 1};
         },
         registerScore: (state, action) => {
-            /* 
-            const { username, score } = action.payload;
-            */ 
-
+            
             const scoreObj = {
                 username: state.userLoggedIn.username,
                 score: state.userLoggedIn.currentPoints

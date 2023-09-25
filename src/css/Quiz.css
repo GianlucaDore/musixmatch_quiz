@@ -6,15 +6,84 @@
     margin-top: 20px;
 }
 
-.quizcard
+.quizcard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: black;
+}
+
+.quiz_card
 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: black;
+    box-shadow: 0px 0px 10px #333;
+    border: solid black 1px;
+    margin-top: 2%;
+}
+
+.question_header
+{
+    background-color: #ff5353;
+    align-self: stretch;
+    text-align: center;
 }
 
 p 
 {
     white-space: pre-line;
     font-size: small;
+}
+
+.lyrics_body 
+{ 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 10px;
+    border: solid black 1px;
+}
+
+.choices {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.alternative 
+{ 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+}
+
+.alternative_button 
+{ 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: #ff5353; 
+    color: white;
+    border: none;
+    box-shadow: 0px 0px 5px #333;
+    width: 200px;
+    height: 50px;
+    padding: 10px;
+    cursor: pointer; 
+    transition: transform 0.3s; 
+}
+
+.alternative_button:hover 
+{ 
+    transform: scale(1.1);
 }

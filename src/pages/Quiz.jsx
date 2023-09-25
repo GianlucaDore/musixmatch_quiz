@@ -28,9 +28,8 @@ export const Quiz = () =>
 
         dispatch(turnOnSpinner("page"));
 
-        dispatch(fetchArtists())
-            //.then(() => {dispatch(turnOnSpinner("card")); dispatch(fetchQuestion())});  // dispatching fetchQuestion (first Q) straight after artists retrieving.
-
+        dispatch(fetchArtists());
+            
     }, [dispatch]);  // On component mount, we prepare the artists' database (the DB from which we pick the alternatives for each question).
 
 
@@ -48,7 +47,7 @@ export const Quiz = () =>
             dispatch(fetchQuestion());  // The next question builder is always triggered by this wrapper component.
         }
 
-    }, [questionIndex]); // On questionIndex change, check if it exceeds 5 first; otherwise, fetch the question.
+    }, [questionIndex, dispatch, navigate]); // On questionIndex change, check if it exceeds 5 first; otherwise, fetch the question.
 
     return (
         <div className="quiz">
@@ -59,8 +58,9 @@ export const Quiz = () =>
                     <ClipLoader color={'black'} loading={isLoading} size={150} /> 
                 </div>
             ) : (
-                <QuizCard cardData={questionData} index={questionIndex} />
-             )}
+                <div className="quizcard">
+                    <QuizCard cardData={questionData} index={questionIndex} />
+                </div>)}
         </div>
     )
 }
