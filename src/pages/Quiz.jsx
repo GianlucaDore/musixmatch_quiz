@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Header } from "../components/Header";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchArtists, getQuestion, getQuestionIndex, fetchQuestion, getClipLoaderStatus, turnOnSpinner, registerScore } from "../redux/quizSlice";
+import { fetchDatabase, getQuestion, getQuestionIndex, fetchQuestion, getClipLoaderStatus, turnOnSpinner, registerScore } from "../redux/quizSlice";
 import { QuizCard } from "../components/QuizCard";
 import { ClipLoader } from "react-spinners";
 import '../css/Quiz.css';
@@ -28,26 +28,30 @@ export const Quiz = () =>
 
         dispatch(turnOnSpinner("page"));
 
-        dispatch(fetchArtists());
+        dispatch(fetchDatabase());
             
     }, [dispatch]);  // On component mount, we prepare the artists' database (the DB from which we pick the alternatives for each question).
 
 
     useEffect(() => {
 
-        if (questionIndex > 5) 
+        /* Race condition: in the quiz section, isLoading indicates only if the database is loading or not. */
+        if (isLoading === false)   // If the database is not loading data, we can start with the questions.
         {
-            dispatch(registerScore()); // goToLeaderboards when questionIndex is greater than 5
-            navigate("/leaderboards");
+            if (questionIndex > 5) 
+            {
+                dispatch(registerScore()); // goToLeaderboards when questionIndex is greater than 5
+                navigate("/leaderboards");
+            }
+
+            else
+            {
+                dispatch(turnOnSpinner("card"));
+                dispatch(fetchQuestion());  // The next question builder is always triggered by this wrapper component.
+            }
         }
 
-        else
-        {
-            dispatch(turnOnSpinner("card"));
-            dispatch(fetchQuestion());  // The next question builder is always triggered by this wrapper component.
-        }
-
-    }, [questionIndex, dispatch, navigate]); // On questionIndex change, check if it exceeds 5 first; otherwise, fetch the question.
+    }, [questionIndex, isLoading, dispatch, navigate]); // On questionIndex change, check if it exceeds 5 first; otherwise, fetch the question.
 
     return (
         <div className="quiz">

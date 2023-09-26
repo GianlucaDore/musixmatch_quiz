@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { trackIDs } from "../track_ids";
 import { redirect } from "react-router-dom";
 
 
@@ -15,19 +14,34 @@ function shuffleArray(array)
     return array;
 }
 
+function initializeScoreBoard()
+{
+    const scoreboard = [];
+    for (let i=0; i<10; i++)
+    {
+        const defaultScore = {
+            username: "-----",
+            score: -Infinity
+        };
+        scoreboard.push(defaultScore);
+    }
+
+    return scoreboard;
+}
+
 
 /* AsyncThunk to retrieve the artists list to act as the DB of the alternatives. */
-export const fetchArtists = createAsyncThunk('quiz/fetchArtists',
+export const fetchDatabase = createAsyncThunk('quiz/fetchDatabase',
     async () =>
     {
-        const htmlquery = "chart.artists.get?chart_name=top&page=1&page_size=30&country=uk&f_has_lyrics=1"
+        const htmlquery = "chart.tracks.get?chart_name=top&page=1&page_size=20&country=it&f_has_lyrics=1"
         const apikey = "4c1ba2ca3c12e38d88e4b8d38b05f5d3"
 
         /* Now we'll fetch the top 10 artists chart for uk from Musixmatch: they'll act as our artists database for the quiz options: */
         const response = await fetch(encodeURI('https://api.musixmatch.com/ws/1.1/' + htmlquery + '&apikey=' + apikey), {
             "method" : 'GET',
             "headers" : {}
-        }).catch((err) => ("There was an error fetching artists' database: " + err));
+        }).catch((err) => ("There was an error fetching database: " + err));
 
         if (!response.ok)
         {
@@ -37,18 +51,20 @@ export const fetchArtists = createAsyncThunk('quiz/fetchArtists',
         
         const res = await response.json();
 
-        /* Let's fill the database with all the artists' details that we've just fetched: */
+        /* Let's fill the database with all the artists' and tracks' details that we've just fetched: */
+        let tracks_database = [];
         let artists_database = [];
-        for (let a of res.message.body.artist_list)
+        for (let t of res.message.body.track_list)
         {
+            tracks_database.push(t.track.commontrack_id);
             const artsObj = {
-                artist_id: a.artist.artist_id,
-                artist_name: a.artist.artist_name
+                artist_id: t.track.artist_id,
+                artist_name: t.track.artist_name
             };
             artists_database.push(artsObj);
         }
 
-        return artists_database;
+        return { tracks_database, artists_database };
     }
 );
 
@@ -59,11 +75,12 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
     {
         /* Let's fetch the random lyrics needed for the question. */
         const apikey = "4c1ba2ca3c12e38d88e4b8d38b05f5d3";
+
         /* We can call Math.random() since we're in a thunk, not in a reducer. */
-        const numberOfTracksInTheFile = 20;  // As of now, track_IDs.js has 20 tracks to choose the question from.
-        const calcualtion = numberOfTracksInTheFile - getState().quiz.userLoggedIn.questionIndex + 1
-        const randomIDIndex = getRandomIndex(calcualtion); // We exclude the track chosen to prevent duplicated questions.
-        const randomID = getState().quiz.track_database[randomIDIndex];  // We access the global state through the getState parameter of the thunk API.
+        const initialNumberOfTracksInTheDB = 20;  // As of current implementation (N=20), database has 20 tracks to choose the question from.
+        const currentTracksInTheDB = initialNumberOfTracksInTheDB - getState().quiz.userLoggedIn.questionIndex + 1  // At first execution of this function, questionIndex is at 1, so the pool should be 19+1.
+        const randomIDIndex = getRandomIndex(currentTracksInTheDB); // We will exclude this track we've just chosen to prevent duplicated questions, so we save this index.
+        const randomID = getState().quiz.tracks_database[randomIDIndex];  // We access the global state through the getState parameter of the thunk API, so we can retrieve the commontrack_ID of the chosen track.
 
         const apiMethod = "track.lyrics.get?commontrack_id="
         const response = await fetch(encodeURI('https://api.musixmatch.com/ws/1.1/' + apiMethod + randomID + '&apikey=' + apikey), {
@@ -82,7 +99,7 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
         let lyrics_body = res.message.body.lyrics.lyrics_body; // We have now the question body.
         if (lyrics_body.includes("*******"))
         {
-            lyrics_body = lyrics_body.split("*******")[0];  // Let's get rid of the disclaimer for now; we'll include it manually in a different style/font.
+            lyrics_body = lyrics_body.split("*******")[0];  // Let's get rid of the disclaimer.
         }
 
         /* We shall now fetch the artist details of this lyrics, it will be our answer. */
@@ -106,22 +123,37 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
 
         /* We take 2 other random artists from the artists array to make the alternatives: */
         const alternatives = [];
-        alternatives.push(getState().quiz.artists_database[getRandomIndex(30)]);  // 30 cause we have fetched the top 30 artists at the start of the quiz (fetchArtists).
-        alternatives.push(getState().quiz.artists_database[getRandomIndex(30)]);  // Actually, no need to exclude the artists already chosen like we had to for the tracks. 30 stays a constant here.
+        /* We have to be careful that the randomIndex function doesn't return as an alternative choice for the question the already chosen artist for the question's answer: */
+        let indexOfAlternative1 = getRandomIndex(20);
+        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1])  // while because the getRandomIndex may return the same index consecutively (rare case, but it may happen).
+        {
+            indexOfAlternative1 = getRandomIndex(20);
+        }
+        /* Same thing must be done with the second alternative, that must be unique aswell, so it must be different from the correctAnswer and also the alternative1 : */
+        let indexOfAlternative2 = getRandomIndex(20);
+        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1] || indexOfAlternative1 === indexOfAlternative2)
+        {
+            indexOfAlternative2 = getRandomIndex(20);
+        }
+
+        /* At this point, we should have our unique alternatives for the question. Let's register them in a variable, then into the store. */
+        alternatives.push(getState().quiz.artists_database[indexOfAlternative1]);  
+        alternatives.push(getState().quiz.artists_database[indexOfAlternative2]);  // Actually, no need to exclude the artists already chosen like we had to for the tracks.
         alternatives.push(correctAnswer);
         /* Let's shuffle the alternatives to prevent the correct answer from being always given as the last option: */
-        shuffleArray(alternatives);
+        shuffleArray(alternatives);  // The Math.random() call is permitted since we're in a thunk and not in a reducer.
         
-        /* In order to prevent duplicated questions, we pass the random index generated to access the tracksID database,
-           so that the reducer function can exclude the already given question from the pool of next questions in the quiz. */
+        /* In order to prevent duplicated questions, we pass the randomIDIndex generated to access the tracks_database,
+           so that the reducer function can exclude the already given question from the pool of next questions of the quiz. */
         return { alternatives, correctAnswer, lyrics_body, randomIDIndex };  
     }
 );
 
+
 function getRandomIndex(max)
 {
     const min=0;
-    /* We proceed to select a random index to pick from the track_ID array in the store, that acts as our question DB. */
+    /* We proceed to select a random index, to pick a commontrack_ID from the tracks_database array in the store that acts as our question DB. */
     const randomIndex = Math.floor(Math.random() * (max - min)) + min; 
     return randomIndex;
 }
@@ -130,7 +162,7 @@ function getRandomIndex(max)
 
 const initialState =
 {
-    track_database: shuffleArray([...trackIDs]),
+    tracks_database: [],
     artists_database: [],
     question: {
         lyrics_line: "",
@@ -149,7 +181,11 @@ const initialState =
         currentPoints: 0,
         questionIndex: 1,
     },
-    scoreboard: []
+    gameHistory: { 
+        username: "",
+        score: ""
+    },
+    scoreboard: initializeScoreBoard()
 }
 
 
@@ -180,11 +216,11 @@ export const quizSlice = createSlice({
             };
         },
         newGame: (state) => {
-            state.track_database = [...trackIDs];  // We restore all the trackIDs of the file in our database for each new game.
+            state.tracks_database = [];  
             state.userLoggedIn = {...state.userLoggedIn, currentPoints: 0, questionIndex: 1};
         },
         registerScore: (state, action) => {
-            
+
             const scoreObj = {
                 username: state.userLoggedIn.username,
                 score: state.userLoggedIn.currentPoints
@@ -196,13 +232,13 @@ export const quizSlice = createSlice({
             if (state.scoreboard.length > 10)
                 state.scoreboard.pop();  // If there are more than 10 entries in the scoreboard, we leave out the last one.
         },
-        addPoints: (state) => {
-            state.userLoggedIn.currentPoints += 100;
-            state.userLoggedIn.questionIndex+= 1;
+        addPoints: (state, action) => {
+            state.userLoggedIn.currentPoints += (100 + action.payload); // More points for quick answers.
+            state.userLoggedIn.questionIndex += 1;
         },
         subtractPoints: (state) => {
             state.userLoggedIn.currentPoints -= 50;
-            state.userLoggedIn.questionIndex+= 1;
+            state.userLoggedIn.questionIndex += 1;
         },
         noPoints: (state) => {
             state.userLoggedIn.questionIndex += 1;
@@ -224,25 +260,24 @@ export const quizSlice = createSlice({
                 correctAnswer: action.payload.correctAnswer
             };
 
-            console.trace();
-            const updatedTrackIDs = [...state.track_database];  // By using splice, we need to make a copy of the state array to adhere to Redux state immutability.
-            updatedTrackIDs.splice(action.payload.randomIDIndex, 1); // We remove 1 item from the state track_database, at the desired position.
+            const updatedTrackIDs = [...state.tracks_database];  // By using splice, we need to make a copy of the state array to adhere to Redux state immutability.
+            updatedTrackIDs.splice(action.payload.randomIDIndex, 1); // We remove 1 item from the state tracks_database, at the desired position.
 
-            return ({...state, track_database: updatedTrackIDs, question: question, isQuizCardLoading: false});
+            return ({...state, tracks_database: updatedTrackIDs, question: question, isQuizCardLoading: false});
         },
-        [fetchArtists.pending] : () => {
-            console.log("Promise fetchArtists is pending.");
+        [fetchDatabase.pending] : () => {
+            console.log("Promise fetchDatabase is pending.");
         },
-        [fetchArtists.rejected] : (state, action) => {
-            console.error("Promise fetchArtists was rejected; error: " + action.payload);
+        [fetchDatabase.rejected] : (state, action) => {
+            console.error("Promise fetchDatabase was rejected; error: " + action.payload);
         },
-        [fetchArtists.fulfilled] : (state, action) => {
-            console.log("Retrieved the artists for the quiz DB (Promise fulfilled).");
+        [fetchDatabase.fulfilled] : (state, action) => {
+            console.log("Retrieved the database for the quiz (Promise fulfilled).");
 
-            /* We've fetched the artists list, we just need to set them in the state as the multiple choice database. */
-            const artists_database = action.payload;
+            /* We've fetched the artists and the track list, we just need to set them in the state as the database. */
+            const { tracks_database, artists_database } = action.payload;
 
-            return ({...state, isPageLoading: false, artists_database: artists_database });
+            return ({...state, isPageLoading: false, tracks_database: tracks_database, artists_database: artists_database });
         },
     }
 });

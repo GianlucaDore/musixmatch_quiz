@@ -44,7 +44,7 @@ export const QuizCard = (props) =>
     const checkChoice = (choice) => 
     {
         if (choice.artist_id === correctAnswer.artist_id)
-            dispatch(addPoints());
+            dispatch(addPoints(clock));
         if (choice.artist_id !== correctAnswer.artist_id)
             dispatch(subtractPoints());
 
