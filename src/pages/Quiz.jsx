@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Header } from "../components/Header";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDatabase, getQuestion, getQuestionIndex, fetchQuestion, getClipLoaderStatus, turnOnSpinner, registerScore } from "../redux/quizSlice";
+import { fetchDatabase, getQuestion, getQuestionIndex, fetchQuestion, getClipLoaderStatus, turnOnSpinner, registerScore, getUserLoggedIn } from "../redux/quizSlice";
 import { QuizCard } from "../components/QuizCard";
 import { ClipLoader } from "react-spinners";
 import '../css/Quiz.css';
@@ -21,16 +21,24 @@ export const Quiz = () =>
 
     const questionIndex = useSelector(getQuestionIndex);
 
+    const { isUserLoggedIn } = useSelector(getUserLoggedIn);
+
 
     /* First useEffect triggers on component's mount, to prepare the quiz alternative choices (artists to choose from) and
        dispatches the first question right after the artist database is fetched. */
-    useEffect(() => {  
+    useEffect(() => { 
+        
+        if (isUserLoggedIn === false)  // If the user tries to access the URL of the quiz (knowing the route/URL) without being logged in.
+        {
+            alert("You must be logged in in order to access the quiz!");
+            navigate("/");
+        }
 
         dispatch(turnOnSpinner("page"));
 
         dispatch(fetchDatabase());
             
-    }, [dispatch]);  // On component mount, we prepare the artists' database (the DB from which we pick the alternatives for each question).
+    }, [isUserLoggedIn, dispatch, navigate]);  // On component mount, we prepare the artists' database (the DB from which we pick the alternatives for each question).
 
 
     useEffect(() => {

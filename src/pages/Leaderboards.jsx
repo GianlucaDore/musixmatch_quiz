@@ -20,12 +20,12 @@ export const Leaderboards = () =>
                 <h1>Leaderboards</h1>
             </div>
             <div className="medals_scores_table">
-                <div className="rankings">
+                <div>
                     <img className="medal" src={rankings[0]} alt="1st_place" />
                     <img className="medal" src={rankings[1]} alt="2nd_place" />
                     <img className="medal" src={rankings[2]} alt="3rd_place" />
-                    { rankings.filter((item, index) => (index > 2)).map((r) => {return (
-                        <p className="rank">{r}</p>
+                    { rankings.filter((item, index) => (index > 2)).map((r, indx) => {return (
+                        <p key={indx} className="rank">{r}</p>
                     )})}
                 </div>
                 <table className="leaderboards"> 
@@ -34,7 +34,7 @@ export const Leaderboards = () =>
                             return (
                                 <tr key={index} className="row">
                                     <td className="cell username">{score.username}</td>
-                                    <td className="cell score">{score.score}</td>
+                                    <td className="cell score">{(score.score === -Infinity) ? (" - ") : (score.score)}</td>
                                 </tr> )
                         })}
                     </tbody>

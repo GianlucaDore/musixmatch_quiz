@@ -1,12 +1,20 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import quizReducer from './quizSlice.js';
-import { persistReducer } from 'redux-persist';
+import {persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import thunk from 'redux-thunk';  // To make the store compatible with async thunks and prevent "non-serializable value" error
+
 
 
 const persistConfig = {
   key: "root",
+  version: 1,
   storage
 }
 
@@ -18,5 +26,10 @@ const persistedReducer = persistReducer(persistConfig, combinedReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,
-  middleware: [thunk]
-});
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
+})

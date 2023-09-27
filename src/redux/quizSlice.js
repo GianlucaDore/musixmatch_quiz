@@ -37,7 +37,7 @@ export const fetchDatabase = createAsyncThunk('quiz/fetchDatabase',
         const htmlquery = "chart.tracks.get?chart_name=top&page=1&page_size=20&country=it&f_has_lyrics=1"
         const apikey = "4c1ba2ca3c12e38d88e4b8d38b05f5d3"
 
-        /* Now we'll fetch the top 10 artists chart for uk from Musixmatch: they'll act as our artists database for the quiz options: */
+        /* Now we'll fetch the top 10 tracks chart for Italy from Musixmatch. We'll make use of both commontrakc_ID and artist details. */
         const response = await fetch(encodeURI('https://api.musixmatch.com/ws/1.1/' + htmlquery + '&apikey=' + apikey), {
             "method" : 'GET',
             "headers" : {}
@@ -121,22 +121,22 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
             artist_name: res2.message.body.track.artist_name,
         };
 
-        /* We take 2 other random artists from the artists array to make the alternatives: */
+        /* We take 2 other random artists from the artists_array to make the alternative choices: */
         const alternatives = [];
         /* We have to be careful that the randomIndex function doesn't return as an alternative choice for the question the already chosen artist for the question's answer: */
         let indexOfAlternative1 = getRandomIndex(20);
-        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1])  // while because the getRandomIndex may return the same index consecutively (rare case, but it may happen).
+        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1])  // 'while' loop because the getRandomIndex may return the same index consecutively (rare case, but it may happen).
         {
             indexOfAlternative1 = getRandomIndex(20);
         }
-        /* Same thing must be done with the second alternative, that must be unique aswell, so it must be different from the correctAnswer and also the alternative1 : */
+        /* Same thing must be done with the second alternative, that must be unique aswell, meaning that it must be different from the correctAnswer and also the alternative1 : */
         let indexOfAlternative2 = getRandomIndex(20);
         while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1] || indexOfAlternative1 === indexOfAlternative2)
         {
             indexOfAlternative2 = getRandomIndex(20);
         }
 
-        /* At this point, we should have our unique alternatives for the question. Let's register them in a variable, then into the store. */
+        /* At this point, we should have our unique options for the question. Let's register them in a variable, then into the store. */
         alternatives.push(getState().quiz.artists_database[indexOfAlternative1]);  
         alternatives.push(getState().quiz.artists_database[indexOfAlternative2]);  // Actually, no need to exclude the artists already chosen like we had to for the tracks.
         alternatives.push(correctAnswer);
@@ -144,7 +144,7 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
         shuffleArray(alternatives);  // The Math.random() call is permitted since we're in a thunk and not in a reducer.
         
         /* In order to prevent duplicated questions, we pass the randomIDIndex generated to access the tracks_database,
-           so that the reducer function can exclude the already given question from the pool of next questions of the quiz. */
+           so that the reducer function can exclude (cut out from the session database) the already-given question from the pool of next questions of the quiz. */
         return { alternatives, correctAnswer, lyrics_body, randomIDIndex };  
     }
 );
@@ -152,7 +152,7 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
 
 function getRandomIndex(max)
 {
-    const min=0;
+    const min=0;  // The start of the interval from which we choose the index is always 0 (the index must redirect us to an array cell).
     /* We proceed to select a random index, to pick a commontrack_ID from the tracks_database array in the store that acts as our question DB. */
     const randomIndex = Math.floor(Math.random() * (max - min)) + min; 
     return randomIndex;
@@ -181,10 +181,7 @@ const initialState =
         currentPoints: 0,
         questionIndex: 1,
     },
-    gameHistory: { 
-        username: "",
-        score: ""
-    },
+    gameHistory: [],
     scoreboard: initializeScoreBoard()
 }
 
@@ -221,6 +218,7 @@ export const quizSlice = createSlice({
         },
         registerScore: (state, action) => {
 
+            /* Let's take care of the scoreboard first. */
             const scoreObj = {
                 username: state.userLoggedIn.username,
                 score: state.userLoggedIn.currentPoints
@@ -231,6 +229,27 @@ export const quizSlice = createSlice({
             state.scoreboard.sort((a, b) => b.score - a.score);  // The array is pretty short, calling sort() is not that computationally onerous... */            /* If the scoreboard has more than 10 entries, we leave out the cell with the lowest score, which will be in tail. */
             if (state.scoreboard.length > 10)
                 state.scoreboard.pop();  // If there are more than 10 entries in the scoreboard, we leave out the last one.
+
+            /* Now that we handled the scoreboard after the given result, time to update the user's game history. */
+            const indexOfUsernameInGameHistory = state.gameHistory.findIndex((i) => (i.username === state.userLoggedIn.username))
+
+            if ( indexOfUsernameInGameHistory >= 0)  // Let's check if the user already exists in the DB.
+            {
+                /* Score history: head deletion, tail insertion. */
+                if (state.gameHistory[indexOfUsernameInGameHistory].scores.length ===5)
+                    { state.gameHistory[indexOfUsernameInGameHistory].scores.shift(); }  // We remove the array's first element (the oldest) if the history is full.
+                
+                state.gameHistory[indexOfUsernameInGameHistory].scores.push(state.userLoggedIn.currentPoints);
+            }
+
+            else  // If the user doesn't exist in the database, we create a "profile" (game history) for them.
+            {
+                const newUserInTheHistory = {
+                    username: state.userLoggedIn.username,
+                    scores: [state.userLoggedIn.currentPoints]
+                }
+                state.gameHistory.push(newUserInTheHistory);
+            }
         },
         addPoints: (state, action) => {
             state.userLoggedIn.currentPoints += (100 + action.payload); // More points for quick answers.
@@ -288,6 +307,13 @@ export const getUserLoggedIn = (state) => state.quiz.userLoggedIn;
 export const getQuestion = (state) => state.quiz.question;
 export const getQuestionIndex = (state) => state.quiz.userLoggedIn.questionIndex;
 export const getLeaderboards = (state) => state.quiz.scoreboard;
+export const getUserGameHistory = (state) => {
+                                                const index = state.quiz.gameHistory.findIndex((i) => i.username === state.quiz.userLoggedIn.username);
+                                                if (index === -1)
+                                                    return null;
+                                                else
+                                                    return state.quiz.gameHistory[index].scores;
+                                             };                           
 
 export const { turnOnSpinner, setUser, logOutUser, newGame, addPoints, subtractPoints, noPoints, registerScore } = quizSlice.actions;
 export default quizSlice.reducer;
