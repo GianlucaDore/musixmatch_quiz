@@ -7,7 +7,7 @@ export const QuizCard = (props) =>
 {
     const [clock, setClock] = useState(60); // We make use of local component state to set a timer for each answer.
 
-    const { options, correctAnswer, lyrics_line } = props.cardData;
+    const { options, correctAnswer, lyrics_line } = props.cardData;  // props destructuring.
 
     const dispatch = useDispatch();
 
@@ -56,7 +56,7 @@ export const QuizCard = (props) =>
     return (
         <>
             {!!isLoading ? (
-                <div className="quiz_clock">
+                <div>
                     <h1>Loading...</h1>
                     <ClockLoader color={'black'} loading={isLoading} size={100} />
                 </div>
@@ -67,7 +67,7 @@ export const QuizCard = (props) =>
                     </div>
                     <h1>Time: {clock}</h1>
                     <div className="lyrics_body">
-                        <h6>Who sings these lyrics?</h6>
+                        <h5>Who sings these lyrics?</h5>
                         <p>{lyrics_line}</p>
                     </div>
                     <div className="choices">

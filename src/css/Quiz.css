@@ -6,7 +6,8 @@
     margin-top: 20px;
 }
 
-.quizcard {
+.quizcard 
+{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -17,6 +18,7 @@
 
 .quiz_card
 {
+    max-width: calc(90% + 20vw);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -25,8 +27,10 @@
     color: black;
     box-shadow: 0px 0px 10px #333;
     border: solid black 1px;
-    margin-top: 2%;
+    margin-top: 3%;
     margin-bottom: 1.5%;
+    margin-left: 15px;
+    margin-right: 15px;
 }
 
 .question_header
@@ -35,12 +39,6 @@
     background-color: #ff5353;
     align-self: stretch;
     text-align: center;
-}
-
-p 
-{
-    white-space: pre-line;
-    font-size: small;
 }
 
 .lyrics_body 
@@ -54,6 +52,12 @@ p
     padding-right: 25px;
     border: solid #ff5353 2px;
     border-radius: 30px;
+}
+.lyrics_body > p 
+{
+    white-space: pre-line;
+    font-size: small;
+    margin-bottom: 0px;
 }
 
 .choices {

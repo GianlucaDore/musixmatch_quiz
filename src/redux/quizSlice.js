@@ -3,12 +3,12 @@ import { redirect } from "react-router-dom";
 
 
 
-function shuffleArray(array) 
+function shuffleArray(array) // Fisher-Yates algorithm to generate permutations. Useful to shuffle an array.
 {
-    for (let i = array.length - 1; i > 0; i--) 
+    for (let i = array.length - 1; i > 0; i--) // Iterates from last to first element of the array
     {
         const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        [array[i], array[j]] = [array[j], array[i]];  // Swaps each element with another element of the same random range
     }
 
     return array;
@@ -18,10 +18,12 @@ function initializeScoreBoard()
 {
     const scoreboard = [];
     for (let i=0; i<10; i++)
-    {
-        const defaultScore = {
+    { 
+        /* We underdimension "score" to -9999 (unreachable score in this implementation) because -Infinity is lost when persisting the state,
+           since it gets lost when the redux-persist library calls the JSON.stringify() method on it to serialize the state to persist it. */
+        const defaultScore = {   
             username: "-----",
-            score: -Infinity
+            score: -9999
         };
         scoreboard.push(defaultScore);
     }
@@ -125,13 +127,13 @@ export const fetchQuestion = createAsyncThunk('quiz/fetchQuestion',
         const alternatives = [];
         /* We have to be careful that the randomIndex function doesn't return as an alternative choice for the question the already chosen artist for the question's answer: */
         let indexOfAlternative1 = getRandomIndex(20);
-        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1])  // 'while' loop because the getRandomIndex may return the same index consecutively (rare case, but it may happen).
+        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1].artist_id)  // 'while' loop because the getRandomIndex may return the same index consecutively (rare case, but it may happen).
         {
             indexOfAlternative1 = getRandomIndex(20);
         }
         /* Same thing must be done with the second alternative, that must be unique aswell, meaning that it must be different from the correctAnswer and also the alternative1 : */
         let indexOfAlternative2 = getRandomIndex(20);
-        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative1] || indexOfAlternative1 === indexOfAlternative2)
+        while (correctAnswer.artist_id === getState().quiz.artists_database[indexOfAlternative2].artist_id || indexOfAlternative2 === indexOfAlternative1)
         {
             indexOfAlternative2 = getRandomIndex(20);
         }
@@ -213,7 +215,8 @@ export const quizSlice = createSlice({
             };
         },
         newGame: (state) => {
-            state.tracks_database = [];  
+            state.tracks_database = []; 
+            state.isPageLoading = true; 
             state.userLoggedIn = {...state.userLoggedIn, currentPoints: 0, questionIndex: 1};
         },
         registerScore: (state, action) => {

@@ -44,7 +44,7 @@ export const BeginForm = () =>
                 <div className="new_user">
                     <h1>Hello there!<br />Please insert your name here to log in:</h1>
                     <form onSubmit={(event) => {event.preventDefault(); dispatch(setUser(event.target[0].value)); navigate("/" )}}>
-                        <input name="username_params" type="text" placeholder="Insert your name..." value={userName} onChange={e => setUserName(e.target.value)} />
+                        <input name="username_params" type="text" placeholder="Insert your name..." maxLength="10" value={userName} onChange={e => setUserName(e.target.value)} />
                         <button className="home_button" type="submit">Log In</button>
                     </form> 
                 </div>

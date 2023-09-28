@@ -2,20 +2,29 @@
 {
     display: flex;
     flex-direction: column;
-
 }
 
 .home h3
 {
     align-self: center;
-    margin-top: 6%;
+    color: #333;
+    margin-top: 18px;
+}
+
+.logo_container
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .logo_container a
 {
     display: flex;
+    width: max-content;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 15px;
 }
 
 .logo_container img 
@@ -29,13 +38,18 @@
     flex-direction: row;
     background-color: #ff5353;
     justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .header_page a
 {
-    display: inline-block;
-    min-width: 13%;
+    display: contents;
     text-decoration: none;
+}
+
+.header_page > div
+{
     margin-left: 1%;
 }
 
@@ -43,28 +57,33 @@
 {
     color: white;
     margin-left: 1%;
+    margin-right: 0;
+    width: max-content; /* Displaying the title fully. */
+    white-space: nowrap;
 }
 
 .current_user
 {
     display: flex;
     flex-direction: row; 
-    align-items: center;
+    align-items: center;  /* Vertically aligning img and username. */
+    justify-content: flex-end;
 }
 
 .current_user img
 {
     max-width: 50px;
     max-height: 30px;
-    filter: invert(100%)  /* Let's make the user icon white. */
+    filter: invert(100%)  /* Making the user icon white. */
 }
 
 .current_user p
 {
     color: white;
     font-weight: bold;
+    align-self: center;
     margin-left: 10px;
-    margin-right: 20px;
+    margin-right: 6%;
 }
 
 .beginform_container
@@ -134,7 +153,7 @@ form input
 {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Horizontally */
+    align-items: center; /* Aligning horizontally. */
     background-color: #f0f0f0;
     border-style: solid;
     border-color: black;
@@ -214,10 +233,30 @@ div ol
     margin: 20px;
 }
 
+.rules h1
+{
+    color: #333;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
 .rules p
 {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: medium;
     font-weight: 350;
     margin-bottom: 25px;
+}
+
+@media screen and (max-width: 440px)  /* Pixel-perfecting for extremely low widths. */
+{
+    .current_user p
+    {
+        color: white;
+        font-size: small;
+        font-weight: bold;
+        align-self: center;
+        margin-left: 2px;
+        margin-right: 2%;
+    }
 }

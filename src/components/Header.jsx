@@ -10,9 +10,11 @@ export const Header = () =>
 
     return (
         <div className="header_page">
-            <Link to="/">
-                <h1>Who's Singing?</h1>
-            </Link>
+            <div>
+                <Link to="/">
+                    <h1>Who's Singing?</h1>
+                </Link>
+            </div>
             {!!username ? (  /* We render the username and the icon only if there's actually a user logged in. */
                 <div className="current_user">
                     <img src={userimage} alt="user_icon" />
