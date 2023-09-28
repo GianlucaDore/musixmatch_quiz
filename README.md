@@ -27,3 +27,25 @@ Libraries used:
 - [react-router-dom](https://www.npmjs.com/package/react-router-dom) , for application's page/screen routing.
 - [redux-persist](https://www.npmjs.com/package/redux-persist) , for persisting redux state into local storage.
 - [react-spinners](https://www.npmjs.com/package/react-spinners) , for implementing loading spinners.
+
+
+# Images
+
+### Home
+![Home](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/4e062ed6-dca4-4799-8d8b-1ac9ec0e9c4d)
+
+### User
+![User](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/2b935b4e-2523-471d-b6c9-cd9b18383aae)
+
+### Quiz
+![Quiz](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/3ac2a718-1afe-447d-ba05-c978c6fc4b4c)
+
+### Leaderboards
+![Leaderboards](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/1d804cda-39e8-4580-aa6e-f4158a33a85d)
+
+## Responsiveness
+
+![Home_responsive](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/14ff8956-ee9b-4d9c-8b21-e81dcd41c895)
+
+
+![Quiz_responsive](https://github.com/GianlucaDore/musixmatch_quiz/assets/51960987/5fb32ee1-83c5-44b2-910c-5dcc6bfa2fe6)
